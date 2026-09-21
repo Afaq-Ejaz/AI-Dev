@@ -1,15 +1,26 @@
-from pydantic import BaseModel , Field
+from pydantic import BaseModel , Field , field_validator
 from datetime import time,datetime 
 
-
-class Parcel(BaseModel):
-    tracking_id: str
-    weight_kg: float=Field(gt=0) # weight is > zero
-
-class Ticket_input(BaseModel):
-    ticket_id : int
+class Ticketinput(BaseModel):
+    ticket_id : str
+    @field_validator("tracking_id")
+    @classmethod
+    def must_start(cls,v:str):
+        if not v.startswith("T-"):
+            raise ValueError
+        return v
     customer_email : str
-    message: str = Field(max_length=100)
+
+    @field_validator("customer_email")
+    @classmethod
+    def must_include(cls,v:str):
+        if ("@" not in v):
+            raise ValueError
+        return v
+    
+    message: str = Field(
+        max_length=100
+    )
     timestamp: datetime 
 
 class Ticket_classification(BaseModel):
