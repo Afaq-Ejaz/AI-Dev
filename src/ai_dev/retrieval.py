@@ -19,8 +19,7 @@ load_dotenv()
 
 # ── Google GenAI Client ──────────────────────────────────────────────
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
-EMBEDDING_MODEL = "text-embedding-004"
-
+EMBEDDING_MODEL = "gemini-embedding-2"
 
 # ── Load Knowledge Base ──────────────────────────────────────────────
 def load_kb(path: str | None = None) -> list[dict]:

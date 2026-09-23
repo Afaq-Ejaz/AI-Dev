@@ -15,6 +15,8 @@ AI-DEV/
 ├── architecture.md                # This file — folder structure reference
 │
 ├── Progress/                      # Development roadmap and learning documentation
+│   ├── architecture.md            # Folder structure reference
+│   ├── learn.md                   # 3-layer deep-dive teaching guide (analogies, internals, jargon)
 │   ├── status.md                  # Phase-by-phase task tracker with checkboxes
 │   ├── learning_objectives        # Skill domains the project is designed to teach
 │   ├── learning_track.md          # AI-assisted learning methodology and progression
@@ -25,6 +27,9 @@ AI-DEV/
         ├── __init__.py            # Package entry point; defines the CLI main() function
         ├── contract.py            # Pydantic data models (TicketInput, TicketClassification, TriageResult)
         ├── kb.json                # Knowledge base — 8 company support policies as structured JSON
-        ├── main.py                # FastAPI app initialization, env loading, and GenAI client setup
-        └── retrieval.py           # Embedding generation, cosine similarity, and KB policy retrieval
+        ├── retrieval.py           # Embedding generation, cosine similarity, and KB policy retrieval
+        ├── classifier.py          # Gemini-powered ticket classification with structured Pydantic output
+        ├── router.py              # Deterministic routing — maps categories to handler functions
+        ├── engine.py              # Unified triage pipeline — classification → retrieval → routing
+        └── main.py                # FastAPI app initialization, env loading, and GenAI client setup
 ```
