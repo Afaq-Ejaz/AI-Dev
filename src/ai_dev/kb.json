@@ -1,0 +1,52 @@
+{
+  "policies": [
+    {
+      "id": "policy_billing_refund",
+      "title": "Billing — Refund Policy",
+      "category": "billing",
+      "content": "Customers are eligible for a full refund within 30 days of purchase. After 30 days, only partial refunds or account credits may be issued. To process a refund, the customer must provide their order ID and the email associated with the account. Refunds typically take 5–7 business days to reflect in the customer's bank statement."
+    },
+    {
+      "id": "policy_billing_subscription",
+      "title": "Billing — Subscription & Charges",
+      "category": "billing",
+      "content": "Subscriptions auto-renew monthly unless canceled before the billing date. If a customer was charged after cancellation, verify the cancellation date in the system. Double charges should be escalated to the payments team with the transaction IDs. Customers can downgrade or upgrade their plan at any time from account settings."
+    },
+    {
+      "id": "policy_account_access",
+      "title": "Account — Login & Access Issues",
+      "category": "account",
+      "content": "If a customer cannot log in, first verify if the account exists using their email. Common causes include incorrect password, expired sessions, or account lockout after 5 failed attempts. Locked accounts automatically unlock after 30 minutes. If the customer forgot their password, guide them to the password reset page. Two-factor authentication issues should be escalated to the security team."
+    },
+    {
+      "id": "policy_account_deletion",
+      "title": "Account — Deletion & Data",
+      "category": "account",
+      "content": "Account deletion requests must be confirmed via email. Once deleted, all user data is permanently removed within 30 days per our data retention policy. Active subscriptions must be canceled before account deletion can proceed. Customers should be informed that deletion is irreversible and they will lose access to purchase history and saved preferences."
+    },
+    {
+      "id": "policy_bug_reporting",
+      "title": "Bug — Technical Issue Reporting",
+      "category": "bug",
+      "content": "When a customer reports a technical issue, collect the following: device type, operating system, browser or app version, and steps to reproduce. Check the known issues page for existing reports. If the bug is confirmed and reproducible, log it with severity level. Critical bugs affecting payment or data loss should be escalated immediately to the engineering team."
+    },
+    {
+      "id": "policy_faq_general",
+      "title": "FAQ — General Product Questions",
+      "category": "faq",
+      "content": "Common questions include: how to change email address (Account Settings > Profile), how to export data (Account Settings > Data Export), supported payment methods (Visa, Mastercard, PayPal), and service availability (99.9% uptime SLA). For feature requests, direct customers to the feedback portal. Product documentation is available at docs.example.com."
+    },
+    {
+      "id": "policy_escalation_rules",
+      "title": "Escalation — When to Escalate",
+      "category": "escalation",
+      "content": "Escalate to a human agent when: the customer explicitly requests to speak to a manager, the issue involves legal or compliance concerns, the customer reports a security breach or unauthorized access, the ticket has been unresolved for more than 48 hours, or the customer expresses extreme dissatisfaction. Always log the reason for escalation and any prior troubleshooting steps taken."
+    },
+    {
+      "id": "policy_faq_shipping",
+      "title": "FAQ — Shipping & Delivery",
+      "category": "faq",
+      "content": "Standard shipping takes 5–7 business days. Express shipping is available for an additional fee and delivers within 1–2 business days. Tracking numbers are sent via email once the order ships. If a package is marked as delivered but not received, advise the customer to check with neighbors and wait 24 hours before filing a missing package claim."
+    }
+  ]
+}

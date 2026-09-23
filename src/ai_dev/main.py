@@ -1,8 +1,8 @@
 import os
 import logging
-from google import genai
 from dotenv import load_dotenv
-from fastapi import FastAPi
+from fastapi import FastAPI
+from google import genai
 
 load_dotenv()
-app = FastAPi()
+app = FastAPI()
