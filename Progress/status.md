@@ -26,7 +26,7 @@
 - [x] Combine classification, retrieval, and routing into a unified engine.
 
 ## Phase 4 — REST API Integration
-- [ ] Build the FastAPI application.
+- [x] Build the FastAPI application.
 - [ ] Create the `POST /triage` endpoint.
 - [ ] Connect endpoint to the triage engine.
 - [ ] Implement error handling and request/response validation.

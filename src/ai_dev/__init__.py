@@ -1,2 +1,5 @@
+from ai_dev.main import start
+
+
 def main() -> None:
-    print("Hello from ai-dev!")
+    start()
