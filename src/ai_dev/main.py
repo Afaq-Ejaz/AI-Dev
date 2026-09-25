@@ -14,6 +14,9 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 import uvicorn
 
+from ai_dev.contract import TicketInput, TriageResult
+from ai_dev.engine import triage
+
 # Load environment variables (.env)
 load_dotenv()
 
@@ -89,6 +92,20 @@ async def health_check():
         "service": "ticketwise-api",
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
+
+# ── Triage Endpoint ──────────────────────────────────────────────────
+@app.post(
+    "/triage",
+    tags=["Triage"],
+    summary="Triage a customer support ticket",
+    response_model=TriageResult,
+)
+async def triage_ticket(ticket: TicketInput):
+    """
+    Accepts a customer support ticket and runs the full pipeline:
+    classification → semantic retrieval → routing.
+    """
+    return triage(ticket)
 
 
 # ── Server Runner ────────────────────────────────────────────────────

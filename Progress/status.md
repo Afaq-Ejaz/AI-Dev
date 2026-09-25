@@ -27,7 +27,7 @@
 
 ## Phase 4 — REST API Integration
 - [x] Build the FastAPI application.
-- [ ] Create the `POST /triage` endpoint.
+- [x] Create the `POST /triage` endpoint.
 - [ ] Connect endpoint to the triage engine.
 - [ ] Implement error handling and request/response validation.
 
