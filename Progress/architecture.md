@@ -12,15 +12,13 @@ AI-DEV/
 ├── pyproject.toml                 # Project metadata, dependencies, and build config (uv)
 ├── uv.lock                        # Locked dependency versions for reproducible installs
 ├── README.md                      # Project overview and documentation (currently empty)
-├── architecture.md                # Root-level copy of this architecture reference
 │
 ├── Progress/                      # Development roadmap and learning documentation
 │   ├── architecture.md            # This file — folder structure reference
 │   ├── learn.md                   # 3-layer deep-dive teaching guide (analogies, internals, jargon)
 │   ├── status.md                  # Phase-by-phase task tracker with checkboxes
-│   ├── learning_objectives        # Skill domains the project is designed to teach
-│   ├── learning_track.md          # AI-assisted learning methodology and progression
-│   └── system_pipeline            # Placeholder for pipeline flow documentation
+│   ├── system_pipeline.md         # Detailed learning objectives and skill domains
+│   └── phase4_explanation.md      # Phase 4 REST API integration and error handling guide
 │
 └── src/                           # Application source code
     └── ai_dev/                    # Main Python package
@@ -31,5 +29,6 @@ AI-DEV/
         ├── classifier.py          # Gemini-powered ticket classification with structured Pydantic output
         ├── router.py              # Deterministic routing — maps categories to handler functions
         ├── engine.py              # Unified triage pipeline — classification → retrieval → routing
-        └── main.py                # FastAPI app initialization, env loading, and GenAI client setup
+        └── main.py                # FastAPI REST API, lifecycle, health/triage endpoints & error handling
 ```
+

@@ -1,6 +1,6 @@
 # TicketWise — Development Phases & Progress Tracker
 
-## Current Status: PHASE 4 (next up)
+## Current Status: PHASE 5 (next up)
 
 ---
 
@@ -28,8 +28,8 @@
 ## Phase 4 — REST API Integration
 - [x] Build the FastAPI application.
 - [x] Create the `POST /triage` endpoint.
-- [ ] Connect endpoint to the triage engine.
-- [ ] Implement error handling and request/response validation.
+- [x] Connect endpoint to the triage engine.
+- [x] Implement error handling and request/response validation.
 
 ## Phase 5 — Verification Interface & Stress Testing
 - [ ] Build the Streamlit UI.

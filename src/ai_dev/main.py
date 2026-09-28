@@ -3,7 +3,8 @@ Phase 4 — FastAPI Application Entry Point
 
 Foundational REST API application for TicketWise.
 Provides API configuration, lifecycle management (lifespan),
-health check endpoints, and automatic OpenAPI / Swagger documentation.
+health check endpoints, error handling, request/response validation,
+and automatic OpenAPI / Swagger documentation.
 """
 
 import os
@@ -11,7 +12,9 @@ import logging
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel, ValidationError
 import uvicorn
 
 from ai_dev.contract import TicketInput, TriageResult
@@ -26,6 +29,14 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
 )
 logger = logging.getLogger("ticketwise.api")
+
+
+# ── Error Response Model ─────────────────────────────────────────────
+class TriageErrorResponse(BaseModel):
+    """Structured error body returned when triage fails."""
+    error: str
+    detail: str
+    status_code: int
 
 
 # ── Lifespan Management ──────────────────────────────────────────────
@@ -49,7 +60,7 @@ tags_metadata = [
     },
     {
         "name": "Triage",
-        "description": "Ticket classification, semantic retrieval, and routing endpoints (Upcoming).",
+        "description": "Ticket classification, semantic retrieval, and routing endpoints.",
     },
 ]
 
@@ -62,6 +73,31 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc",
 )
+
+
+# ── Global Exception Handler ────────────────────────────────────────
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    """
+    Catch-all for any unhandled exception that slips through.
+    Logs the full traceback and returns a clean 500 response
+    instead of leaking internal details to the caller.
+    """
+    logger.error(
+        "Unhandled exception on %s %s: %s",
+        request.method,
+        request.url.path,
+        exc,
+        exc_info=True,
+    )
+    return JSONResponse(
+        status_code=500,
+        content=TriageErrorResponse(
+            error="internal_server_error",
+            detail="An unexpected error occurred. Please try again later.",
+            status_code=500,
+        ).model_dump(),
+    )
 
 
 # ── System Endpoints ─────────────────────────────────────────────────
@@ -93,19 +129,81 @@ async def health_check():
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
 
+
 # ── Triage Endpoint ──────────────────────────────────────────────────
 @app.post(
     "/triage",
     tags=["Triage"],
     summary="Triage a customer support ticket",
     response_model=TriageResult,
+    responses={
+        422: {
+            "description": "Validation Error — request body failed Pydantic checks "
+                           "(e.g. missing '@' in email, subject > 100 chars).",
+        },
+        502: {
+            "description": "Bad Gateway — the upstream Gemini API call failed "
+                           "(network error, invalid key, rate limit).",
+            "model": TriageErrorResponse,
+        },
+        500: {
+            "description": "Internal Server Error — an unexpected failure occurred.",
+            "model": TriageErrorResponse,
+        },
+    },
 )
 async def triage_ticket(ticket: TicketInput):
     """
     Accepts a customer support ticket and runs the full pipeline:
     classification → semantic retrieval → routing.
     """
-    return triage(ticket)
+    try:
+        result = triage(ticket)
+        return result
+
+    except ValidationError as exc:
+        # Pydantic validation failed on the *response* side
+        # (e.g. Gemini returned a confidence of 1.5, which violates ge=0/le=1)
+        logger.warning(
+            "Response validation error for ticket from %s: %s",
+            ticket.customer_email,
+            exc,
+        )
+        raise HTTPException(
+            status_code=422,
+            detail=f"The triage pipeline produced invalid data: {exc.error_count()} validation error(s).",
+        )
+
+    except Exception as exc:
+        # Catch Gemini / network / embedding errors
+        exc_name = type(exc).__name__
+
+        # Google GenAI SDK raises various errors for API issues —
+        # treat them all as upstream failures (502 Bad Gateway).
+        if "google" in type(exc).__module__.lower() if hasattr(type(exc), "__module__") else False:
+            logger.error(
+                "Gemini API error while triaging ticket from %s: [%s] %s",
+                ticket.customer_email,
+                exc_name,
+                exc,
+            )
+            raise HTTPException(
+                status_code=502,
+                detail=f"Upstream AI service error ({exc_name}). Please try again later.",
+            )
+
+        # Anything else is a genuine internal error
+        logger.error(
+            "Unexpected error while triaging ticket from %s: [%s] %s",
+            ticket.customer_email,
+            exc_name,
+            exc,
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=500,
+            detail="An internal error occurred while processing your ticket. Please try again later.",
+        )
 
 
 # ── Server Runner ────────────────────────────────────────────────────
@@ -116,3 +214,4 @@ def start():
 
 if __name__ == "__main__":
     start()
+
