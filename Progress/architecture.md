@@ -29,6 +29,7 @@ AI-DEV/
         ├── classifier.py          # Gemini-powered ticket classification with structured Pydantic output
         ├── router.py              # Deterministic routing — maps categories to handler functions
         ├── engine.py              # Unified triage pipeline — classification → retrieval → routing
-        └── main.py                # FastAPI REST API, lifecycle, health/triage endpoints & error handling
+        ├── main.py                # FastAPI REST API, lifecycle, health/triage endpoints & error handling
+        └── dashboard.py           # Streamlit verification UI — ticket submission, visualization & stress tests
 ```
 

@@ -1,6 +1,6 @@
 # TicketWise — Development Phases & Progress Tracker
 
-## Current Status: PHASE 5 (next up)
+## Current Status: PHASE 5 ✅ COMPLETE
 
 ---
 
@@ -32,8 +32,8 @@
 - [x] Implement error handling and request/response validation.
 
 ## Phase 5 — Verification Interface & Stress Testing
-- [ ] Build the Streamlit UI.
-- [ ] Submit test tickets and visualize similarity scores/routing.
-- [ ] Stress test: vague queries (insufficient or ambiguous information).
-- [ ] Stress test: aggressive messages (emotional tone shouldn't break classification).
-- [ ] Stress test: mixed issues (tickets combining billing and technical problems).
+- [x] Build the Streamlit UI (`dashboard.py`).
+- [x] Submit test tickets and visualize similarity scores/routing.
+- [x] Stress test: vague queries (insufficient or ambiguous information).
+- [x] Stress test: aggressive messages (emotional tone shouldn't break classification).
+- [x] Stress test: mixed issues (tickets combining billing and technical problems).
