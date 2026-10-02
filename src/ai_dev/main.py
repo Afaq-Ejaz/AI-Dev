@@ -13,12 +13,13 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ValidationError
 import uvicorn
 
 from ai_dev.contract import TicketInput, TriageResult
-from ai_dev.engine import triage
+from ai_dev.engine import triage, triage_detailed
 
 # Load environment variables (.env)
 load_dotenv()
@@ -72,6 +73,15 @@ app = FastAPI(
     openapi_tags=tags_metadata,
     docs_url="/docs",
     redoc_url="/redoc",
+)
+
+# ── CORS Middleware (allows Streamlit UI to call the API) ────────────
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
@@ -200,6 +210,68 @@ async def triage_ticket(ticket: TicketInput):
             exc,
             exc_info=True,
         )
+        raise HTTPException(
+            status_code=500,
+            detail="An internal error occurred while processing your ticket. Please try again later.",
+        )
+
+
+# ── Detailed Triage Endpoint (for Streamlit UI) ─────────────────────
+@app.post(
+    "/triage/detail",
+    tags=["Triage"],
+    summary="Triage with full similarity breakdown",
+    description="Returns the standard TriageResult plus similarity scores against ALL KB policies for visualization.",
+    responses={
+        502: {
+            "description": "Bad Gateway — the upstream Gemini API call failed.",
+            "model": TriageErrorResponse,
+        },
+        500: {
+            "description": "Internal Server Error — an unexpected failure occurred.",
+            "model": TriageErrorResponse,
+        },
+    },
+)
+async def triage_ticket_detailed(ticket: TicketInput):
+    """
+    Extended triage endpoint: runs the full pipeline and returns
+    all similarity scores for every KB policy (for Streamlit visualization).
+    """
+    try:
+        detailed = triage_detailed(ticket)
+        result = detailed["triage_result"]
+        return {
+            "ticket_id": result.ticket_id,
+            "timestamp": result.timestamp.isoformat(),
+            "classification": {
+                "category": result.classification.category,
+                "confidence": result.classification.confidence,
+                "reasoning": result.classification.reasoning,
+                "priority": result.classification.priority,
+            },
+            "matched_policy": result.matched_policy,
+            "similarity_score": result.similarity_score,
+            "response_message": result.response_message,
+            "all_similarity_scores": detailed["all_similarity_scores"],
+        }
+
+    except ValidationError as exc:
+        logger.warning("Response validation error: %s", exc)
+        raise HTTPException(
+            status_code=422,
+            detail=f"The triage pipeline produced invalid data: {exc.error_count()} validation error(s).",
+        )
+
+    except Exception as exc:
+        exc_name = type(exc).__name__
+        if "google" in type(exc).__module__.lower() if hasattr(type(exc), "__module__") else False:
+            logger.error("Gemini API error: [%s] %s", exc_name, exc)
+            raise HTTPException(
+                status_code=502,
+                detail=f"Upstream AI service error ({exc_name}). Please try again later.",
+            )
+        logger.error("Unexpected error: [%s] %s", exc_name, exc, exc_info=True)
         raise HTTPException(
             status_code=500,
             detail="An internal error occurred while processing your ticket. Please try again later.",

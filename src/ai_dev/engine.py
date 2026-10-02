@@ -48,6 +48,50 @@ def triage(ticket: TicketInput) -> TriageResult:
     return result
 
 
+def triage_detailed(ticket: TicketInput) -> dict:
+    """
+    Extended pipeline that returns:
+    - The full TriageResult
+    - All similarity scores for every KB policy (for visualization)
+    """
+    # Step 1: Classify
+    classification: TicketClassification = classify_ticket(ticket)
+
+    # Step 2: Retrieve top match + compute ALL scores for visualization
+    query = f"{ticket.subject} {ticket.message}"
+    matched_policy, similarity_score = retrieve_top_match(query, _policies, _kb_embeddings)
+
+    # Compute scores against every policy
+    from ai_dev.retrieval import generate_embedding, cosine_similarity
+    query_embedding = generate_embedding(query)
+    all_scores = []
+    for i, kb_emb in enumerate(_kb_embeddings):
+        score = cosine_similarity(query_embedding, kb_emb)
+        all_scores.append({
+            "policy_id": _policies[i]["id"],
+            "policy_title": _policies[i]["title"],
+            "category": _policies[i]["category"],
+            "similarity_score": round(float(score), 4),
+        })
+    all_scores.sort(key=lambda x: x["similarity_score"], reverse=True)
+
+    # Step 3: Route
+    response_message = route_ticket(ticket, classification, matched_policy)
+
+    # Step 4: Package
+    result = TriageResult(
+        classification=classification,
+        matched_policy=matched_policy["title"],
+        similarity_score=similarity_score,
+        response_message=response_message,
+    )
+
+    return {
+        "triage_result": result,
+        "all_similarity_scores": all_scores,
+    }
+
+
 # ── Quick Test ───────────────────────────────────────────────────────
 if __name__ == "__main__":
     import json
