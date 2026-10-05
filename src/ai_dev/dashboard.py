@@ -42,6 +42,20 @@ PRIORITY_ICONS = {
     "low": "🟢",
 }
 
+# ── Theme Tokens (exposed to CSS as --variables) ─────────────────────
+THEMES = {
+    "dark": dict(
+        bg="linear-gradient(180deg, #0b1120 0%, #1e293b 100%)", side="linear-gradient(180deg, #1e293b, #0b1120)",
+        text="#e2e8f0", muted="#94a3b8", surface="rgba(255,255,255,0.04)", border="rgba(255,255,255,0.10)",
+        input="rgba(15,23,42,0.85)", accent="#a78bfa", shadow="0 6px 24px rgba(0,0,0,0.30)", vf="none",
+    ),
+    "light": dict(
+        bg="linear-gradient(180deg, #f8fafc 0%, #e0e7ff 100%)", side="linear-gradient(180deg, #ffffff, #eef2ff)",
+        text="#0f172a", muted="#64748b", surface="rgba(255,255,255,0.70)", border="rgba(15,23,42,0.10)",
+        input="#ffffff", accent="#7c3aed", shadow="0 6px 24px rgba(15,23,42,0.08)", vf="brightness(0.8) saturate(1.3)",
+    ),
+}
+
 
 # ── Stress Test Suites ──────────────────────────────────────────────
 STRESS_TESTS = {
@@ -165,6 +179,15 @@ def call_triage_api(email: str, subject: str, message: str) -> dict | None:
         return None
 
 
+# ── Helper: Metric card (styled by .tw-card CSS, theme-aware) ────────
+def _card(col, label: str, value: str, color: str):
+    col.markdown(
+        f'<div class="tw-card" style="background:linear-gradient(135deg,{color}22,{color}11);border-color:{color}55">'
+        f'<p class="lbl">{label}</p><p class="val" style="color:{color}">{value}</p></div>',
+        unsafe_allow_html=True,
+    )
+
+
 # ── Helper: Render result card ───────────────────────────────────────
 def render_result(result: dict, label: str = ""):
     """Display a single triage result with classification info and similarity chart."""
@@ -180,54 +203,12 @@ def render_result(result: dict, label: str = ""):
         st.markdown(f"##### 🏷️ {label}")
 
     # ── Classification Metrics ───────────────────────────────────
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        cat_color = CATEGORY_COLORS.get(category, "#6B7280")
-        st.markdown(
-            f'<div style="text-align:center; padding:12px; border-radius:12px; '
-            f'background:linear-gradient(135deg, {cat_color}22, {cat_color}11); '
-            f'border:1px solid {cat_color}44;">'
-            f'<p style="margin:0; font-size:0.75em; opacity:0.7;">CATEGORY</p>'
-            f'<p style="margin:0; font-size:1.3em; font-weight:700; color:{cat_color};">'
-            f'{category.upper()}</p></div>',
-            unsafe_allow_html=True,
-        )
-    with col2:
-        pri_color = PRIORITY_COLORS.get(priority, "#6B7280")
-        pri_icon = PRIORITY_ICONS.get(priority, "⚪")
-        st.markdown(
-            f'<div style="text-align:center; padding:12px; border-radius:12px; '
-            f'background:linear-gradient(135deg, {pri_color}22, {pri_color}11); '
-            f'border:1px solid {pri_color}44;">'
-            f'<p style="margin:0; font-size:0.75em; opacity:0.7;">PRIORITY</p>'
-            f'<p style="margin:0; font-size:1.3em; font-weight:700; color:{pri_color};">'
-            f'{pri_icon} {priority.upper()}</p></div>',
-            unsafe_allow_html=True,
-        )
-    with col3:
-        conf_pct = confidence * 100
-        conf_color = "#22C55E" if conf_pct >= 70 else "#EAB308" if conf_pct >= 50 else "#EF4444"
-        st.markdown(
-            f'<div style="text-align:center; padding:12px; border-radius:12px; '
-            f'background:linear-gradient(135deg, {conf_color}22, {conf_color}11); '
-            f'border:1px solid {conf_color}44;">'
-            f'<p style="margin:0; font-size:0.75em; opacity:0.7;">CONFIDENCE</p>'
-            f'<p style="margin:0; font-size:1.3em; font-weight:700; color:{conf_color};">'
-            f'{conf_pct:.0f}%</p></div>',
-            unsafe_allow_html=True,
-        )
-    with col4:
-        sim_pct = result["similarity_score"] * 100
-        sim_color = "#3B82F6" if sim_pct >= 70 else "#EAB308" if sim_pct >= 50 else "#EF4444"
-        st.markdown(
-            f'<div style="text-align:center; padding:12px; border-radius:12px; '
-            f'background:linear-gradient(135deg, {sim_color}22, {sim_color}11); '
-            f'border:1px solid {sim_color}44;">'
-            f'<p style="margin:0; font-size:0.75em; opacity:0.7;">SIMILARITY</p>'
-            f'<p style="margin:0; font-size:1.3em; font-weight:700; color:{sim_color};">'
-            f'{sim_pct:.1f}%</p></div>',
-            unsafe_allow_html=True,
-        )
+    conf_pct, sim_pct = confidence * 100, result["similarity_score"] * 100
+    cols = st.columns(4)
+    _card(cols[0], "CATEGORY", category.upper(), CATEGORY_COLORS.get(category, "#6B7280"))
+    _card(cols[1], "PRIORITY", f"{PRIORITY_ICONS.get(priority, '⚪')} {priority.upper()}", PRIORITY_COLORS.get(priority, "#6B7280"))
+    _card(cols[2], "CONFIDENCE", f"{conf_pct:.0f}%", "#22C55E" if conf_pct >= 70 else "#EAB308" if conf_pct >= 50 else "#EF4444")
+    _card(cols[3], "SIMILARITY", f"{sim_pct:.1f}%", "#3B82F6" if sim_pct >= 70 else "#EAB308" if sim_pct >= 50 else "#EF4444")
 
     st.markdown("")  # spacer
 
@@ -281,14 +262,14 @@ def render_result(result: dict, label: str = ""):
             xaxis=dict(
                 title="Cosine Similarity",
                 range=[0, 1],
-                gridcolor="rgba(128,128,128,0.15)",
+                gridcolor=T["border"],
             ),
             yaxis=dict(autorange="reversed"),
             height=max(280, len(titles) * 40),
             margin=dict(l=10, r=10, t=40, b=30),
             plot_bgcolor="rgba(0,0,0,0)",
             paper_bgcolor="rgba(0,0,0,0)",
-            font=dict(size=12),
+            font=dict(size=12, color=T["text"], family="Inter, sans-serif"),
         )
         st.plotly_chart(fig, use_container_width=True)
 
@@ -302,54 +283,65 @@ st.set_page_config(
 )
 
 
-# ── Custom CSS ───────────────────────────────────────────────────────
-st.markdown("""
-<style>
-    /* Subtle background gradient */
-    .stApp {
-        background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
-    }
+# ── Theme Toggle (defaults to the browser's detected Streamlit theme) ─
+NATIVE_MODE = st.context.theme.type or "dark"
+with st.sidebar:
+    st.markdown("## 🎫 TicketWise")
+    st.markdown("**Phase 5** — Verification & Stress Testing")
+    MODE = "dark" if st.toggle("🌙 Dark mode", value=NATIVE_MODE == "dark", key="dark_mode") else "light"
+    st.divider()
 
-    /* Sidebar styling */
-    section[data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #1e293b, #0f172a);
-    }
+# Canvas-rendered dataframe follows Streamlit's native theme → invert only when it mismatches.
+T = {**THEMES[MODE], "df": "none" if MODE == NATIVE_MODE else "invert(1) hue-rotate(180deg)"}
 
-    /* Make metric cards pop */
-    div[data-testid="stMetric"] {
-        background: rgba(255,255,255,0.03);
-        border: 1px solid rgba(255,255,255,0.08);
-        border-radius: 12px;
-        padding: 12px;
-    }
 
-    /* Form submit button styling */
-    .stButton > button {
-        background: linear-gradient(135deg, #3B82F6, #8B5CF6);
-        color: white;
-        border: none;
-        border-radius: 8px;
-        padding: 0.5rem 2rem;
-        font-weight: 600;
-        transition: all 0.3s ease;
+# ── Custom CSS (all colors come from the --theme variables above) ────
+st.markdown("<style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');"
+            ":root{" + "".join(f"--{k}:{v};" for k, v in T.items()) + "}" + """
+    html, body, .stApp, .stApp p, .stApp label, .stApp input, .stApp textarea, .stApp button,
+    .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5 { font-family: 'Inter', sans-serif; }
+
+    /* Background, sidebar & text */
+    .stApp { background: var(--bg); color: var(--text); transition: background .4s ease, color .4s ease; }
+    header[data-testid="stHeader"] { background: transparent; }
+    section[data-testid="stSidebar"] { background: var(--side); border-right: 1px solid var(--border); }
+    .stApp h1, .stApp h2, .stApp h3, .stApp h4, .stApp h5, [data-testid="stMarkdownContainer"],
+    [data-testid="stWidgetLabel"], [data-testid="stExpander"] summary, button[data-baseweb="tab"] { color: var(--text); }
+    [data-testid="stCaptionContainer"], .stApp input::placeholder, .stApp textarea::placeholder { color: var(--muted); }
+
+    /* Inputs */
+    .stApp [data-baseweb="input"], .stApp [data-baseweb="base-input"], .stApp [data-baseweb="textarea"],
+    .stApp input, .stApp textarea { background: var(--input); color: var(--text); border-color: var(--border); }
+
+    /* Glass surfaces: forms, expanders, metric cards */
+    [data-testid="stForm"], [data-testid="stExpander"] details, div[data-testid="stMetric"], .tw-card {
+        background-color: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+        box-shadow: var(--shadow); backdrop-filter: blur(8px);
     }
-    .stButton > button:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+    .tw-card { text-align: center; padding: 12px; transition: transform .2s ease; }
+    .tw-card:hover { transform: translateY(-2px); }
+    .tw-card p { margin: 0; }
+    .tw-card .lbl { font-size: .72em; font-weight: 600; letter-spacing: .08em; color: var(--muted); }
+    .tw-card .val { font-size: 1.3em; font-weight: 800; filter: var(--vf); }
+
+    /* Code chips, dataframe, dividers */
+    .stApp code { background: var(--surface); color: var(--accent); border: 1px solid var(--border); }
+    [data-testid="stDataFrame"] { filter: var(--df); }
+    hr { border-color: var(--border); }
+
+    /* Buttons (regular + form submit) */
+    .stButton button, .stFormSubmitButton button {
+        background: linear-gradient(135deg, #3B82F6, #8B5CF6); color: #fff; border: none;
+        border-radius: 8px; padding: .5rem 2rem; font-weight: 600; transition: all .3s ease;
+    }
+    .stButton button p, .stFormSubmitButton button p { color: #fff; }
+    .stButton button:hover, .stFormSubmitButton button:hover {
+        transform: translateY(-1px); box-shadow: 0 4px 15px rgba(59, 130, 246, .4);
     }
 
     /* Expander headers */
-    .streamlit-expanderHeader {
-        font-weight: 600;
-        font-size: 1.05em;
-    }
-
-    /* Divider styling */
-    hr {
-        border-color: rgba(255,255,255,0.08);
-    }
-</style>
-""", unsafe_allow_html=True)
+    .streamlit-expanderHeader { font-weight: 600; font-size: 1.05em; }
+</style>""", unsafe_allow_html=True)
 
 
 # ── Session State ────────────────────────────────────────────────────
@@ -359,9 +351,6 @@ if "history" not in st.session_state:
 
 # ── Sidebar ──────────────────────────────────────────────────────────
 with st.sidebar:
-    st.markdown("## 🎫 TicketWise")
-    st.markdown("**Phase 5** — Verification & Stress Testing")
-    st.divider()
 
     # API Health Check
     st.markdown("### 🔌 API Status")
